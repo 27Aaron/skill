@@ -1,115 +1,122 @@
 ---
 name: git-commit
-description: 生成或审查 Git 提交消息、处理 commitlint 错误，并在用户要求时创建或 amend 提交。优先遵循仓库规则并参考历史提交，无稳定格式约定时使用 Conventional Commits。
+description: Write, review, or fix Git commit messages (including commitlint errors), and create or amend commits when explicitly asked. Follows repo conventions first, Conventional Commits otherwise. Not for PR titles or descriptions.
 metadata:
   author: Aaron
-  version: "1.0.3"
+  version: "2.0.0"
 ---
 
-# Git 提交
+# Git Commit
 
-优先遵循用户明确要求和仓库专用指令、commitlint 配置。未明确规定的格式和语言，在可访问仓库时参考近期历史提交中的稳定约定；历史仅用于风格参考，不作为本次改动的证据。无法确认稳定格式约定时，默认使用 [Conventional Commits v1.0.0](https://www.conventionalcommits.org/zh-hans/v1.0.0/)。
+Convention priority: user instructions > repo rules (`AGENTS.md`, `CONTRIBUTING`, commitlint config) > style of recent `git log` > [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/). History is a style reference only, never evidence of what the current change does.
 
-## 操作边界
+## Scope of action
 
-- 用户仅要求起草、生成、修改或建议提交消息时，默认只返回一条完整消息，不添加解释、引号、Markdown 或代码块；用户明确要求多个候选或解释时除外。
-- 审查提交消息时，按用户要求给出结论、原因或修订后的消息。
-- 只有用户明确要求暂存或提交时才修改暂存区；只有明确要求创建提交或将改动保存到 Git 时才运行 `git commit`。请求含糊时不修改仓库。
-- 只有用户明确要求修改已记录的提交时才 amend。
+- **Draft / suggest a message**: reply with exactly one message as plain text — no preamble, quotes, or code fence — unless the user asks for alternatives or an explanation. Do not touch the repo.
+- **Review a message**: give a verdict, the specific problems, and a corrected message.
+- **Commit**: stage or commit only when the user explicitly asks. If the request is ambiguous, draft instead.
+- **Amend**: only when explicitly asked, and only `HEAD`. Older commits need a rebase, which requires its own approval.
+- Never push, change Git config, use `--no-verify`, or rewrite pushed history unless asked. Never force-push `main`/`master`.
 
-## 生成消息
-
-以下模板和 type 规则仅适用于采用 Conventional Commits 的任务。
+## Message format
 
 ```text
-<type>[可选 scope][!]: <描述>
+<type>(<scope>)!: <description>
 
-[可选正文]
+<body>
 
-[可选脚注]
+<footer>
 ```
 
-类型和版本语义：
+### Type
 
-| Type   | 适用场景 | 语义化版本 |
-| ------ | -------- | ---------- |
-| `fix`  | 修复 bug | `PATCH`    |
-| `feat` | 新增功能 | `MINOR`    |
+| Type | Use for |
+| --- | --- |
+| `feat` | New user- or developer-facing capability (SemVer MINOR) |
+| `fix` | Bug fix (SemVer PATCH) |
+| `perf` | Performance improvement |
+| `refactor` | Code change with no behavior change |
+| `docs` | Documentation only |
+| `test` | Adding or fixing tests |
+| `build` | Build system, packaging, dependencies |
+| `ci` | CI configuration and workflows |
+| `style` | Formatting only (whitespace, semicolons); not UI styling |
+| `revert` | Reverting a previous commit |
+| `chore` | Maintenance that fits nothing above — last resort |
 
-- 破坏性变更：在 `<type>[可选 scope]!:` 中使用 `!`，和/或添加 `BREAKING CHANGE:` 脚注；可用于任意 type，对应语义化版本中的 `MAJOR`。只使用 `!` 时，在标题中说明破坏内容。
+Pick the type by the change's effect, not its file paths: a dependency bump that fixes a bug is `fix`; tests and docs that accompany a feature stay in `feat`.
 
-其他常用 type 沿用 `@commitlint/config-conventional`（基于 Angular）的约定：
+### Subject line (`<type>(<scope>)!: <description>`)
 
-| Type       | 适用场景                                       |
-| ---------- | ---------------------------------------------- |
-| `build`    | 修改构建系统、构建依赖或工具链                 |
-| `chore`    | 无法归入其他类型的维护性改动                   |
-| `ci`       | 修改持续集成配置或工作流                       |
-| `docs`     | 修改 README、API 文档等文档                    |
-| `style`    | 调整缩进、空格或空行等代码样式，不改变逻辑     |
-| `refactor` | 修改代码结构、变量名或函数名等，不改变功能逻辑 |
-| `perf`     | 优化性能或减少资源占用                         |
-| `test`     | 添加、删除或修改测试                           |
+- **Length**: the whole line, prefix included. Aim for ≤ 50 characters (git's own recommendation); never exceed 72 — GitHub's web UI truncates longer subjects with "…". A repo rule such as commitlint's `header-max-length` (100 in `config-conventional`) overrides both.
+- Imperative mood: "add", "fix", "remove" — not "added" or "adds". Test: "If applied, this commit will _<description>_".
+- Start the description lowercase (commitlint rejects sentence-case by default); no trailing period.
+- Describe the outcome, not the activity: `fix(auth): reject expired refresh tokens`, not `fix: update auth.ts`.
+- Scope is optional. Use it only when a module or area is clearly identifiable from the diff or repo convention; omit it rather than guess.
+- Language: follow the repo's history; with no history, use English unless the user asks otherwise.
 
-依赖更新按实际目的和仓库约定选择 type，不一律归为 `build` 或 `chore`。除 `BREAKING CHANGE: <description>` 外，其他脚注遵循 `git trailer` 约定。
+### Body
 
-- 用户提供消息、diff、改动摘要或 commitlint 错误时，以其为主要依据；只有缺少必要上下文或仓库规则时才检查仓库。
-- 先确定目标快照。目标为 staged 改动时，只依据 staged 文件和 `staged diff`；未暂存 diff 和分支名不能证明功能、动机、影响或未展示的文件。
-- 信息不足时使用最保守且准确的描述，不补充现有证据无法支持的细节或影响。
-- 根据已确认的变更结果选择准确 type；仓库规则优先，只有其他类型都不合适时才使用 `chore`。
-- 只有文件路径、模块名称或 diff 明确支持时才使用 scope；无法确认时省略。
-- 描述使用祈使语气，概括目标快照中主要的用户可见或开发者可见变更。
-- 语言和风格按上述优先级选择；没有稳定语言约定或仅提供文本上下文时匹配用户语言。没有其他约定时，标题结尾不加句号，建议不超过 72 个字符。
-- 仅在标题无法说明原因、背景或影响时添加正文，不重复文件列表。
-- 不要虚构 issue 编号、审查者或共同作者；未经明确要求，不添加 `BREAKING CHANGE:` 以外的 Git trailer。
+Add one only when the subject can't carry the *why*: motivation, the previous behavior, trade-offs, side effects. Separate it from the subject with a blank line, wrap at 72 characters, and don't list changed files — the diff already does.
 
-### 处理 commitlint 错误
+### Footer
 
-根据报错的规则名和仓库实际配置做最小修订，保留消息的真实含义。配置可比 Conventional Commits 更严格，例如要求 `!` 与 `BREAKING CHANGE:` 同时出现；不要为通过校验虚构破坏性变更。需要验证时使用仓库已有的 commitlint 入口，不通过创建提交来试错，也不擅自安装依赖、修改配置或关闭规则。规则语义不明确时查阅 [commitlint 官方规则](https://commitlint.js.org/reference/rules.html)。
+- Breaking change: add `!` before the colon and/or a `BREAKING CHANGE: <what breaks and how to migrate>` footer. Valid on any type. Never claim a breaking change just to pass a lint rule.
+- Issue references (`Refs: #123`, `Closes #123`) only for issues the user gave you or that appear in the context — never invent numbers.
+- Add `Co-authored-by:`, `Signed-off-by:` or other trailers only when asked or required by the repo (e.g. DCO).
+- Revert: `revert: <original subject>` with body `This reverts commit <full-sha>.`
 
-## 工作流程
+### Examples
 
-### 1. 分析目标改动
-
-- 仅为 staged 改动生成消息时，检查 `git status --short` 和 `git diff --staged`；未暂存内容只能用于识别仍会保留的改动，不作为消息证据。
-- 实际执行提交时，同时检查 `git status --short`、`git diff --staged` 和 `git diff`；文件仅部分暂存时，将两部分视为独立快照。
-- amend 前确认用户要修改的提交是 HEAD，并检查其内容；其他历史提交不能用 `--amend` 直接修改。消息应描述修改后的完整提交，而不只是新加入的 staged diff。
-- 以用户声明的范围确定本次应包含的改动。
-- 用户明确指定的范围优先；未指定范围但已有暂存内容时，默认只处理 staged 快照。
-- 用户只要求处理 staged 改动而暂存区为空时，报告没有目标改动，不自动改用工作区。其他任务没有暂存内容时，根据工作区 diff 和相关 untracked 内容确定范围。
-- 需要匹配仓库约定时，检查仓库指令、commitlint 配置和近期提交标题。
-
-### 2. 准备提交内容
-
-- 仅修改 HEAD 消息时跳过暂存，使用 `git commit --amend --only --file=-` 且不传文件路径，保留原提交内容和已有暂存改动。这是下述 staged 范围规则的例外，语义见 [git commit 文档](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---only)。
-- 创建新提交或将改动纳入 amend 时，在“操作边界”的授权范围内，优先保持一个提交对应一个逻辑变更，不得擅自遗漏或拆分用户要求的范围。用户未要求包含某文件全部改动时，不用整文件暂存覆盖其部分暂存快照。
-- 对需要纳入文件改动的提交，保留已有 staged 快照。若其包含范围外改动且用户尚未指定处理方式，暂停提交并询问，不擅自取消暂存或绕过索引。
-- `git diff` 不显示 untracked 文件；暂存前检查其类型和相关内容，不得暂存密钥、私钥或范围外生成文件，也不要暴露敏感值。
-- 暂存后运行 `git diff --staged --check` 并检查 `git diff --staged`。新提交以该快照生成消息；纳入改动的 amend 同时结合原提交内容，描述修改后的完整提交。
-
-### 3. 执行提交
-
-通过标准输入将完整消息传给 `git commit --file=-`，或使用其他不会被 shell 重新解析的方式；不要把消息插值到 shell 命令中。
-
-创建新提交时，如果确定目标范围后没有任何 `staged` 改动，应报告没有可提交的内容。除非用户明确要求创建空提交，否则不要使用 `--allow-empty`。
-
-允许 hooks 正常运行，不要自动绕过。Hook 失败时：
-
-- 检查 hook 输出和 `git status --short`。
-- 仅修复本次范围内的问题；Hook 修改文件后重新检查 staged diff，不要盲目暂存。
-- 如果失败涉及无关文件、扩大任务范围或缺少授权，停止并报告。同一原因重复失败且没有新的修复依据时，不循环重试。
-
-确认 `git commit` 成功退出后，使用以下命令验证提交结果；失败时不能把已有 HEAD 当成本次成功提交：
-
-```bash
-git status --short
-git log -1 --format='%H%n%s'
+```text
+feat(api): add cursor pagination to /orders
 ```
 
-核对实际提交内容与预期快照一致；仅修改消息的 amend 还应确认提交的文件树未变。报告提交哈希和标题，并说明仍然存在的 staged、unstaged 或 untracked 改动。
+```text
+fix(sync): retry uploads after token refresh
 
-## 安全边界
+Uploads started just before token expiry failed with 401 and were
+dropped silently. Refresh the token once and replay the request.
+```
 
-- 提交或 amend 都不代表用户授权推送。
-- 除非用户明确要求，否则不修改 Git 配置、不使用 `--no-verify`、破坏性命令、历史重写或强制推送。
-- 绝不强制推送 `main` 或 `master`。
+```text
+refactor(config)!: drop support for YAML config files
+
+BREAKING CHANGE: config.yaml is no longer read. Convert it to
+config.toml; `app migrate-config` does this automatically.
+```
+
+## Evidence
+
+- If the user supplied a diff, summary, or message, work from that; read the repo only for missing context or conventions.
+- Otherwise the target is the **staged** snapshot: `git diff --staged`. Unstaged changes and branch names are not evidence of what is being committed.
+- If the user asked about staged changes and nothing is staged, say so — don't silently fall back to the working tree.
+- When evidence is thin, write the most conservative accurate description. Don't invent motivation or impact.
+- Check conventions with `git log --oneline -15` and any commitlint config (`commitlint.config.*`, `.commitlintrc*`, `package.json#commitlint`).
+
+## Committing
+
+1. Inspect: `git status --short`, `git diff --staged`, `git diff`. Treat partially staged files as two separate snapshots.
+2. Stage only what the user asked for. Keep an existing staged snapshot intact; if it contains out-of-scope changes, ask before unstaging. Prefer `git add <path>` over `git add -A`; never stage secrets, keys, `.env` files, or unrelated build output. Check untracked files before adding them.
+3. One logical change per commit. If the scope mixes unrelated changes, suggest splitting, but don't split or drop anything without approval.
+4. Run `git diff --staged --check`, then write the message from the final staged diff.
+5. Commit with the message on stdin so the shell never reinterprets it:
+   ```bash
+   git commit --file=- <<'EOF'
+   feat(api): add cursor pagination to /orders
+   EOF
+   ```
+6. Let hooks run. If one fails, read its output, fix only in-scope problems, re-check the staged diff (hooks may modify files), and retry. Stop and report if the fix is out of scope or the same failure repeats.
+7. Verify: confirm the exit status, then `git log -1 --format='%h %s'` and `git status --short`. Report the hash, subject, and anything left staged, unstaged, or untracked.
+
+Don't use `--allow-empty` unless asked; with nothing staged, report that there is nothing to commit.
+
+### Amending
+
+- Message only: `git commit --amend --only --file=-` (no paths) keeps the tree and any staged changes untouched.
+- Adding changes: stage them, then `git commit --amend --file=-`. The message must describe the whole resulting commit, not just the new part.
+- If `HEAD` is already pushed, warn that amending requires a force-push before doing it.
+
+## commitlint errors
+
+Fix exactly what the reported rule (e.g. `subject-case`, `header-max-length`, `type-enum`) complains about, guided by the repo's actual config, and preserve the message's meaning. Validate with the repo's own entry point (e.g. `npx --no-install commitlint < msg.txt`), not by creating trial commits. Don't install packages, edit the config, or disable rules. Look up unfamiliar rules in the [rule reference](https://commitlint.js.org/reference/rules.html).
