@@ -117,8 +117,3 @@ When asked to write in the user's voice or to match sample text:
    - **Flat and cold** (neat but lifeless): the voice is missing. Strengthen the attitude and loosen the device quota.
    - **Overwrought** (every line shows off): tighten the quota and surround the strong lines with plain ones (#30).
    - **Empty** (mood without increment, form without content): not a density problem. Give the piece something to say (#31); it can't be written from atmosphere alone.
-
-## Attribution
-
-- Adapted from [Kami](https://github.com/tw93/Kami) `skills/kami/references/anti-patterns.md`, MIT License, Copyright (c) 2026 Tw93.
-- Rhythm, restraint, and voice-matching guidance adapted from [TaysiTsuki](https://github.com/MidAutumnMoon/TaysiTsuki) `.agents/skills/writing-style/SKILL.md`, MIT License, Copyright (c) 2021 MidAutumnMoon.
