@@ -1,6 +1,6 @@
 ---
 name: writing-anti-patterns
-description: Catch and fix common AI-writing failures — empty claims, fabricated or unlabeled numbers, filler structure, unsourced facts, corporate tone, Chinese AI clichés, and decorative visuals. Use when writing or editing copy, blog posts, articles, or any prose.
+description: Catch and fix common AI-writing failures — empty claims, fabricated or unlabeled numbers, filler structure, unsourced facts, corporate tone, Chinese AI clichés, overwrought or hollow prose, and decorative visuals — and match a writer's voice from samples. Use when writing or editing copy, blog posts, articles, or any prose.
 metadata:
   author: Aaron
   version: "2.0.0"
@@ -64,24 +64,61 @@ Common failures when AI writes or edits text, each with a bad example and the fi
 | 28 | Caption restates the diagram | "六类来源 → 六道过滤 → 配比设计 → 训练分片，四步串联" | Cap 给出图意以外的判断："来源决定知识边界，过滤决定干净程度，配比决定能力侧重" |
 | 29 | Caption restates the title | Title: "ORM vs PRM 对比" / Cap: "ORM 跟 PRM 的对比" | Cap 必须给出标题之外的信息：取舍判据、适用场景、或讲到这里要带出的下一步。同义重写浪费了 cap 的注意力位 |
 
-Self-check for #2, #25–27 (simplified and traditional):
+## Rhythm and Restraint
+
+LLMs don't hold back unless told to: by default they use every device they know, all at once. Good writing is mostly ordinary sentences; the strong lines stand out because of them.
+
+| # | Pattern | Bad | Fix |
+|---|---------|-----|-----|
+| 30 | Every sentence performs | Each sentence carries a metaphor, a parallel pair, or a punchline | Most sentences are plain and carry information. At most one device in five sentences; if every line is a highlight, none is |
+| 31 | Atmosphere without increment | "海面很亮，风很轻，一切都安静下来" — mood stacked, nothing learned | Every detail must carry information or move the reader's understanding: say why it is bright, at what hour, tied to which event. Deletion test: if removing a fact collapses the paragraph, the piece runs on information — don't swap facts for scenery |
+| 32 | Telegraphic plainness | "A推开门进去了。桌上三个杯子。她坐下。" — zero warmth, zero information | Plain ≠ telegraphic: "A翻了半天柜子找打火机，翻到第三个抽屉放弃了，顺手拿火柴凑合。" No device, but action and information carry it, and the tone comes through |
+| 33 | Signature construction on repeat | "不是X，是Y" / "It's not just X — it's Y" four times in one piece | A distinctive construction appears once, at most. Any pattern in an example gets copied as a template, so watch the examples too |
+| 34 | Ruminating on one sensation | The same smell, light, or feeling described three ways | One stroke per sense, then move on |
+| 35 | Narration repeats the quote | A quote makes the point, then the next sentence explains it again | What a quote or dialogue already said, the narration doesn't repeat |
+| 36 | Stretching thin material | Out of things to say, the paragraph keeps going in new words | When the material runs out, move to the next point or end |
+| 37 | Elevated ending | "这不仅是一次旅行，更是一场心灵的洗礼" / "In the end, it's all about the journey" | End on the last real point: no elevation, no lyricism, no summary |
+
+Self-check for #2, #25–27, #33, #37 (simplified and traditional):
 
 ```bash
-grep -nE '本质是|本質是|这意味着|這意味著|值得注意的是|不仅.*而且|不僅.*而且|赋能|賦能|一站式|[——–]' <file>
+grep -nE '本质是|本質是|这意味着|這意味著|值得注意的是|不仅.*而且|不僅.*而且|赋能|賦能|一站式|不是.{1,20}(而)?是|总之|總之|总而言之|總而言之|综上|綜上|[——–]' <file>
+grep -niE "not just|isn't just|more than just|in conclusion|in summary|at the end of the day" <file>
 ```
 
 ## Charts and Images
 
 | # | Pattern | Bad | Fix |
 |---|---------|-----|-----|
-| 30 | Chart with no insight title | Chart titled "Revenue by Quarter" | Title states the insight: "Revenue accelerated after Q2 price change" |
-| 31 | Decorative chart that restates the text | Bar chart showing the same three numbers the paragraph just listed | If the text already communicates it, the chart must add a dimension (comparison, trend, distribution) |
-| 32 | Icon or emoji as section marker | Sections led by decorative icons with no semantic value | Use typographic hierarchy (size, weight, spacing) instead |
-| 33 | Label chrome over every heading | `01 · FEATURES` above each section when the sections are not a sequence | Number only real sequences (chapters, steps) |
-| 34 | Visual brief leaks into reader copy | Caption says "21:9 ultra-wide screenshot with quiet background" | Keep image prompts and crop notes out of the text; captions state the insight |
-| 35 | Real screenshot redrawn as fake UI | A product screenshot is AI-redesigned and no longer matches the shipped app | Preserve real screenshots |
-| 36 | Missing image filled with atmosphere | Abstract texture used because no screenshot was provided | Mark the material gap or omit the image; do not substitute unrelated imagery |
+| 38 | Chart with no insight title | Chart titled "Revenue by Quarter" | Title states the insight: "Revenue accelerated after Q2 price change" |
+| 39 | Decorative chart that restates the text | Bar chart showing the same three numbers the paragraph just listed | If the text already communicates it, the chart must add a dimension (comparison, trend, distribution) |
+| 40 | Icon or emoji as section marker | Sections led by decorative icons with no semantic value | Use typographic hierarchy (size, weight, spacing) instead |
+| 41 | Label chrome over every heading | `01 · FEATURES` above each section when the sections are not a sequence | Number only real sequences (chapters, steps) |
+| 42 | Visual brief leaks into reader copy | Caption says "21:9 ultra-wide screenshot with quiet background" | Keep image prompts and crop notes out of the text; captions state the insight |
+| 43 | Real screenshot redrawn as fake UI | A product screenshot is AI-redesigned and no longer matches the shipped app | Preserve real screenshots |
+| 44 | Missing image filled with atmosphere | Abstract texture used because no screenshot was provided | Mark the material gap or omit the image; do not substitute unrelated imagery |
+
+## Matching a Voice
+
+When asked to write in the user's voice or to match sample text:
+
+1. **Samples beat instructions.** What the samples show outweighs what the instructions say; when they conflict, follow the samples. The tone of your own notes rubs off on the output, so think in the target voice, not in jargon.
+2. **Read the samples along these axes**, as a picture of how the writer relates to the reader, not as a scorecard:
+   - Sentence rhythm: mostly short or long? Short-short-long bursts?
+   - Register: written, spoken, dialect; jargon or coined words
+   - Distance: detached observer, or close to the subject?
+   - Quotes vs narration: which one moves the piece?
+   - Devices: which ones (repetition, parallelism, metaphor), and how dense
+   - Where emotion sits: up front, at the end, held down throughout, or released at once
+   - **How it advances**: new information, layered images, shifting emotion, or events. This is the axis most often misread — LLMs read every style as mood. Use the deletion test from #31.
+3. **Attitude is the default state, not a device.** It runs through every sentence; devices are seasoning and get a quota. Rationing attitude like a device produces neat, cold text.
+4. **Quote frequency, not adjectives.** "At most one device in five sentences" works; "use sparingly" is ignored.
+5. **Revise one problem per pass**, and tell the three failure directions apart:
+   - **Flat and cold** (neat but lifeless): the voice is missing. Strengthen the attitude and loosen the device quota.
+   - **Overwrought** (every line shows off): tighten the quota and surround the strong lines with plain ones (#30).
+   - **Empty** (mood without increment, form without content): not a density problem. Give the piece something to say (#31); it can't be written from atmosphere alone.
 
 ## Attribution
 
-Adapted from [Kami](https://github.com/tw93/Kami) `skills/kami/references/anti-patterns.md`, MIT License, Copyright (c) 2026 Tw93.
+- Adapted from [Kami](https://github.com/tw93/Kami) `skills/kami/references/anti-patterns.md`, MIT License, Copyright (c) 2026 Tw93.
+- Rhythm, restraint, and voice-matching guidance adapted from [TaysiTsuki](https://github.com/MidAutumnMoon/TaysiTsuki) `.agents/skills/writing-style/SKILL.md`, MIT License, Copyright (c) 2021 MidAutumnMoon.
